@@ -2,8 +2,8 @@ package main
 
 import (
 	"log"
-	"os"
 	"myapp/handlers"
+	"os"
 
 	"github.com/tsawler/celeritas"
 )
@@ -26,7 +26,7 @@ func initApplication() *application {
 	myHandlers := &handlers.Handlers{
 		App: cel,
 	}
-	
+
 	app := &application{
 		App: cel,
 		Handlers: myHandlers,
