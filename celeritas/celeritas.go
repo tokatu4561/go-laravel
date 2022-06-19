@@ -23,7 +23,7 @@ type Celeritas struct {
 	ErrorLog *log.Logger
 	InfoLog *log.Logger
 	RootPath string
-	Route *chi.Mux
+	Routes  *chi.Mux
 	Render *render.Render
 	config config
 }
@@ -61,7 +61,7 @@ func (c *Celeritas) New(rootPath string) error {
 	c.ErrorLog = errorLog
 	c.Debug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
 	c.Version = version
-	c.Route = c.routes().(*chi.Mux)
+	c.Routes = c.routes().(*chi.Mux)
 
 	c.config = config {
 		port: os.Getenv("PORT"),
@@ -91,7 +91,7 @@ func (c *Celeritas) ListenAndServe() {
 	srv := &http.Server{
 		Addr: fmt.Sprintf(":%s", os.Getenv("PORT")),
 		ErrorLog: c.ErrorLog,
-		Handler: c.routes(),
+		Handler: c.Routes,
 		IdleTimeout: 30 * time.Second,
 		ReadTimeout: 30 * time.Second,
 		WriteTimeout: 600 * time.Second,

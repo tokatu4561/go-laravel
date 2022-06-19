@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"myapp/handlers"
 
 	"github.com/tsawler/celeritas"
 )
@@ -22,11 +23,16 @@ func initApplication() *application {
 
 	cel.AppName = "myapp"
 
-	cel.InfoLog.Println("Debug is set to" ,cel.Debug)
+	myHandlers := &handlers.Handlers{
+		App: cel,
+	}
 	
 	app := &application{
 		App: cel,
+		Handlers: myHandlers,
 	}
+
+	app.App.Routes = app.routes()
 
 	return app
 }
