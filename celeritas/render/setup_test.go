@@ -18,6 +18,6 @@ var testRenderer = Render{
 	JetViews: views,
 }
 
-func testMain(m *testing.M){
+func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }

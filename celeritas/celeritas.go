@@ -9,10 +9,9 @@ import (
 	"time"
 
 	"github.com/CloudyKit/jet/v6"
-	"github.com/go-chi/chi/v5"
 	"github.com/alexedwards/scs/v2"
+	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
-
 	"github.com/tsawler/celeritas/render"
 	"github.com/tsawler/celeritas/session"
 )
@@ -30,18 +29,18 @@ type Celeritas struct {
 	RootPath string
 	Routes   *chi.Mux
 	Render   *render.Render
-	JetViews *jet.Set
 	Session  *scs.SessionManager
-	DB Database
+	DB       Database
+	JetViews *jet.Set
 	config   config
 }
 
 type config struct {
-	port     string
-	renderer string
+	port        string
+	renderer    string
 	cookie      cookieConfig
 	sessionType string
-	database databaseConfig
+	database    databaseConfig
 }
 
 // New reads the .env file, creates our application config, populates the Celeritas type with settings
@@ -71,16 +70,16 @@ func (c *Celeritas) New(rootPath string) error {
 	// create loggers
 	infoLog, errorLog := c.startLoggers()
 
-	// databaseへ接続
+	// connect to database
 	if os.Getenv("DATABASE_TYPE") != "" {
 		db, err := c.OpenDB(os.Getenv("DATABASE_TYPE"), c.BuildDSN())
 		if err != nil {
 			errorLog.Println(err)
 			os.Exit(1)
 		}
-		c.DB = Database {
+		c.DB = Database{
 			DataType: os.Getenv("DATABASE_TYPE"),
-			Pool: db,
+			Pool:     db,
 		}
 	}
 
@@ -99,17 +98,23 @@ func (c *Celeritas) New(rootPath string) error {
 			lifetime: os.Getenv("COOKIE_LIFETIME"),
 			persist:  os.Getenv("COOKIE_PERSISTS"),
 			secure:   os.Getenv("COOKIE_SECURE"),
-			domain: os.Getenv("COOKIE_DOMAIN"),
+			domain:   os.Getenv("COOKIE_DOMAIN"),
 		},
 		sessionType: os.Getenv("SESSION_TYPE"),
+		database: databaseConfig{
+			database: os.Getenv("DATABASE_TYPE"),
+			dsn: c.BuildDSN(),
+		},
 	}
 
-	sess := session.Session {
+	// create session
+
+	sess := session.Session{
 		CookieLifetime: c.config.cookie.lifetime,
-		CookiePersist: c.config.cookie.persist,
-		CookieName: c.config.cookie.name,
-		SessionType: c.config.sessionType,
-		CookieDomain: c.config.cookie.domain,
+		CookiePersist:  c.config.cookie.persist,
+		CookieName:     c.config.cookie.name,
+		SessionType:    c.config.sessionType,
+		CookieDomain:   c.config.cookie.domain,
 	}
 
 	c.Session = sess.InitSession()
@@ -150,6 +155,8 @@ func (c *Celeritas) ListenAndServe() {
 		WriteTimeout: 600 * time.Second,
 	}
 
+	defer c.DB.Pool.Close()
+
 	c.InfoLog.Printf("Listening on port %s", os.Getenv("PORT"))
 	err := srv.ListenAndServe()
 	c.ErrorLog.Fatal(err)
@@ -183,23 +190,27 @@ func (c *Celeritas) createRenderer() {
 	c.Render = &myRenderer
 }
 
+// BuildDSN builds the datasource name for our database, and returns it as a string
 func (c *Celeritas) BuildDSN() string {
 	var dsn string
-	
+
 	switch os.Getenv("DATABASE_TYPE") {
 	case "postgres", "postgresql":
 		dsn = fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=%s timezone=UTC connect_timeout=5",
-		os.Getenv("DATABASE_HOST"),
-		os.Getenv("DATABASE_PORT"),
-		os.Getenv("DATABASE_USER"),
-		os.Getenv("DATABASE_NAME"),
-		os.Getenv("DATABASE_SSL_MODE"))
+			os.Getenv("DATABASE_HOST"),
+			os.Getenv("DATABASE_PORT"),
+			os.Getenv("DATABASE_USER"),
+			os.Getenv("DATABASE_NAME"),
+			os.Getenv("DATABASE_SSL_MODE"))
 
+		// we check to see if a database passsword has been supplied, since including "password=" with nothing
+		// after it sometimes causes postgres to fail to allow a connection.
 		if os.Getenv("DATABASE_PASS") != "" {
 			dsn = fmt.Sprintf("%s password=%s", dsn, os.Getenv("DATABASE_PASS"))
 		}
-	
+
 	default:
+
 	}
 
 	return dsn

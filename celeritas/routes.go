@@ -9,7 +9,6 @@ import (
 
 func (c *Celeritas) routes() http.Handler {
 	mux := chi.NewRouter()
-
 	mux.Use(middleware.RequestID)
 	mux.Use(middleware.RealIP)
 	if c.Debug {
