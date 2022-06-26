@@ -2,6 +2,7 @@ package main
 
 import (
 	"myapp/handlers"
+	"myapp/data"
 
 	"github.com/tsawler/celeritas"
 )
@@ -9,6 +10,7 @@ import (
 type application struct {
 	App *celeritas.Celeritas
 	Handlers *handlers.Handlers
+	Models data.Models
 }
 
 func main() {

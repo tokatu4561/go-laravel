@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"myapp/handlers"
+	"myapp/data"
 	"os"
 
 	"github.com/tsawler/celeritas"
@@ -33,6 +34,8 @@ func initApplication() *application {
 	}
 
 	app.App.Routes = app.routes()
+
+	app.Models = data.New(app.App.DB.Pool)
 
 	return app
 }

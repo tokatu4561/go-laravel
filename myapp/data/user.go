@@ -2,6 +2,7 @@ package data
 
 import (
 	"time"
+	"errors"
 	"golang.org/x/crypto/bcrypt"
 	up "github.com/upper/db/v4"
 )
@@ -147,4 +148,18 @@ func (u *User) ResetPassword(id int, password string) error {
 	}
 
 	return nil
+}
+
+func (u *User) PasswordMatches(plainText string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(plainText))
+	if err != nil {
+		switch {
+		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
+			return false, nil
+		default:
+			return false, err
+		}
+	}
+
+	return true, nil
 }
